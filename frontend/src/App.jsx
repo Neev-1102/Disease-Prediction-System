@@ -26,7 +26,7 @@ function App() {
       );
 
       const res = await axios.post(
-        "http://localhost:5000/predict",
+        "https://disease-prediction-backend-av56.onrender.com/predict",
         {
           symptoms: symptomArray,
         }
