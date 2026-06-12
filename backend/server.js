@@ -12,15 +12,14 @@ app.get("/", (req, res) => {
 });
 
 app.post("/predict", (req, res) => {
-    const symptoms = req.body.symptoms;
-
-if (!symptoms || symptoms.length === 0) {
-    return res.status(400).json({
-        error: "Select at least one symptom"
-    });
-}
 
     const symptoms = req.body.symptoms;
+
+    if (!symptoms || symptoms.length === 0) {
+        return res.status(400).json({
+            error: "Select at least one symptom"
+        });
+    }
 
     const py = spawn("python", [
         "predict.py",
@@ -38,7 +37,7 @@ if (!symptoms || symptoms.length === 0) {
         error += data.toString();
     });
 
-    py.on("close", (code) => {
+    py.on("close", () => {
 
         console.log("Python Output:");
         console.log(result);
@@ -51,6 +50,7 @@ if (!symptoms || symptoms.length === 0) {
         try {
             res.json(JSON.parse(result));
         } catch (err) {
+
             console.log("JSON Parse Error:", err);
 
             res.status(500).json({
@@ -59,6 +59,7 @@ if (!symptoms || symptoms.length === 0) {
             });
         }
     });
+
 });
 
 app.listen(5000, () => {
