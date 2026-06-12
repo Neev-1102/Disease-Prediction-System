@@ -109,7 +109,7 @@ function App() {
 
     doc.setFontSize(12);
     doc.text(`Disease: ${result.disease}`, 20, 40);
-    doc.text(`Confidence: ${result.confidence}`, 20, 50);
+    doc.text(`Confidence: ${result.confidence}%`, 20, 50);
 
     const symptomText = selectedSymptoms.map((s) => s.label).join(", ");
     doc.text(`Symptoms Provided: ${symptomText}`, 20, 70);
@@ -169,7 +169,7 @@ function App() {
               </p>
 
               <p className="mt-2 text-lg">
-                <strong>Confidence:</strong> {result.confidence}
+                <strong>Confidence:</strong> {result.confidence}%
               </p>
 
               {/* Parsed numeric value handling for the progress indicator wrapper */}
@@ -229,7 +229,7 @@ function App() {
               {history.map((item, index) => (
                 <div key={index} className="py-2 flex justify-between text-gray-700">
                   <span className="capitalize font-medium">{item.disease}</span>
-                  <span className="text-gray-500">{item.confidence}</span>
+                  <span className="text-gray-500">{item.confidence}%</span>
                 </div>
               ))}
             </div>
