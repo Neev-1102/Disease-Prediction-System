@@ -12,6 +12,13 @@ app.get("/", (req, res) => {
 });
 
 app.post("/predict", (req, res) => {
+    const symptoms = req.body.symptoms;
+
+if (!symptoms || symptoms.length === 0) {
+    return res.status(400).json({
+        error: "Select at least one symptom"
+    });
+}
 
     const symptoms = req.body.symptoms;
 

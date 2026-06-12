@@ -24,6 +24,10 @@ function App() {
       const symptomArray = selectedSymptoms.map(
         (item) => item.value
       );
+        if (symptomArray.length === 0) {
+  alert("Please select at least one symptom");
+  return;
+}
 
       const res = await axios.post(
         "https://disease-prediction-backend-av56.onrender.com/predict",
