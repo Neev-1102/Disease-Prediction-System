@@ -12,7 +12,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/predict", (req, res) => {
-
     const symptoms = req.body.symptoms;
 
     if (!symptoms || symptoms.length === 0) {
@@ -21,10 +20,10 @@ app.post("/predict", (req, res) => {
         });
     }
 
-    const py = spawn("python", [
-        "predict.py",
-        JSON.stringify(symptoms)
-    ]);
+    // CRITICAL UPDATE: Call python3 and explicitly pass unbuffered environment flags
+    const py = spawn("python3", ["predict.py", JSON.stringify(symptoms)], {
+        env: { ...process.env, PYTHONUNBUFFERED: "1" }
+    });
 
     let result = "";
     let error = "";
@@ -37,31 +36,39 @@ app.post("/predict", (req, res) => {
         error += data.toString();
     });
 
-    py.on("close", () => {
-
-        console.log("Python Output:");
+    py.on("close", (code) => {
+        console.log(`Python process exited with code ${code}`);
+        console.log("Python Output Matrix:");
         console.log(result);
 
         if (error) {
-            console.log("Python Error:");
+            console.log("Python Error Stream Log:");
             console.log(error);
         }
 
+        // Catch explicit script internal execution failures
+        if (code !== 0) {
+            return res.status(500).json({
+                error: "Internal model evaluation error",
+                details: error || "Python script exited with an error code."
+            });
+        }
+
         try {
-            res.json(JSON.parse(result));
+            // Reconstruct string stream back to a valid frontend JSON payload
+            const parsedData = JSON.parse(result.trim());
+            res.json(parsedData);
         } catch (err) {
-
-            console.log("JSON Parse Error:", err);
-
+            console.log("JSON Parse Error on Node Server:", err);
             res.status(500).json({
-                error: "Prediction failed",
+                error: "Prediction streaming structural failure",
                 output: result
             });
         }
     });
-
 });
 
-app.listen(5000, () => {
-    console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running smoothly on port ${PORT}`);
 });
