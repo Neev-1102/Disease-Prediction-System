@@ -217,7 +217,239 @@ const diseaseInfo = {
       "Stay hydrated",
       "Avoid contact with others"
     ]
-  }
+  },
+
+  "(vertigo) Paroymsal Positional Vertigo": {
+  description: "A condition causing dizziness and spinning sensation due to head movement.",
+  doctor: "ENT Specialist",
+  precautions: [
+    "Avoid sudden movements",
+    "Sleep properly",
+    "Stay hydrated",
+    "Follow treatment"
+  ]
+},
+
+"Alcoholic hepatitis": {
+  description: "Inflammation of the liver caused by excessive alcohol use.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Avoid alcohol",
+    "Eat nutritious food",
+    "Stay hydrated",
+    "Regular checkups"
+  ]
+},
+
+"Arthritis": {
+  description: "Inflammation of joints causing pain and stiffness.",
+  doctor: "Rheumatologist",
+  precautions: [
+    "Exercise regularly",
+    "Maintain healthy weight",
+    "Protect joints",
+    "Follow medications"
+  ]
+},
+
+"Cervical spondylosis": {
+  description: "Age-related wear and tear affecting neck bones.",
+  doctor: "Orthopedic Doctor",
+  precautions: [
+    "Maintain posture",
+    "Exercise carefully",
+    "Avoid heavy lifting",
+    "Stretch regularly"
+  ]
+},
+
+"Common Cold": {
+  description: "A viral infection affecting nose and throat.",
+  doctor: "General Physician",
+  precautions: [
+    "Drink warm fluids",
+    "Take rest",
+    "Maintain hygiene",
+    "Eat healthy food"
+  ]
+},
+
+"Gastroenteritis": {
+  description: "Inflammation of stomach and intestines causing diarrhea.",
+  doctor: "General Physician",
+  precautions: [
+    "Drink ORS",
+    "Stay hydrated",
+    "Eat light meals",
+    "Take rest"
+  ]
+},
+
+"Hepatitis A": {
+  description: "A viral infection affecting liver function.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Drink clean water",
+    "Avoid alcohol",
+    "Eat healthy food",
+    "Take rest"
+  ]
+},
+
+"Hepatitis B": {
+  description: "A viral infection that can damage the liver.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Take prescribed medicines",
+    "Avoid alcohol",
+    "Regular testing",
+    "Healthy diet"
+  ]
+},
+
+"Hepatitis C": {
+  description: "A liver infection caused by hepatitis C virus.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Take medicines",
+    "Avoid alcohol",
+    "Eat healthy meals",
+    "Attend follow-up visits"
+  ]
+},
+
+"Hepatitis D": {
+  description: "A liver disease occurring with hepatitis B infection.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Medical monitoring",
+    "Healthy eating",
+    "Rest properly",
+    "Avoid alcohol"
+  ]
+},
+
+"Hepatitis E": {
+  description: "A liver infection commonly spread through contaminated water.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Drink clean water",
+    "Eat hygienic food",
+    "Take rest",
+    "Stay hydrated"
+  ]
+},
+
+"Hyperthyroidism": {
+  description: "Condition where thyroid gland becomes overactive.",
+  doctor: "Endocrinologist",
+  precautions: [
+    "Take medications",
+    "Monitor thyroid",
+    "Eat balanced diet",
+    "Exercise moderately"
+  ]
+},
+
+"Hypoglycemia": {
+  description: "Condition where blood sugar becomes too low.",
+  doctor: "Endocrinologist",
+  precautions: [
+    "Eat meals on time",
+    "Carry glucose",
+    "Monitor sugar",
+    "Avoid skipping meals"
+  ]
+},
+
+"Hypothyroidism": {
+  description: "Condition where thyroid gland becomes underactive.",
+  doctor: "Endocrinologist",
+  precautions: [
+    "Take thyroid medicine",
+    "Exercise regularly",
+    "Maintain diet",
+    "Monitor health"
+  ]
+},
+
+"Impetigo": {
+  description: "A contagious bacterial skin infection.",
+  doctor: "Dermatologist",
+  precautions: [
+    "Keep skin clean",
+    "Avoid scratching",
+    "Wash hands",
+    "Apply prescribed medicine"
+  ]
+},
+
+"Jaundice": {
+  description: "Yellowing of skin caused by liver-related conditions.",
+  doctor: "Hepatologist",
+  precautions: [
+    "Stay hydrated",
+    "Eat healthy food",
+    "Take rest",
+    "Avoid alcohol"
+  ]
+},
+
+"Osteoarthristis": {
+  description: "Joint disease causing pain and reduced flexibility.",
+  doctor: "Orthopedic Doctor",
+  precautions: [
+    "Exercise gently",
+    "Maintain healthy weight",
+    "Protect joints",
+    "Follow treatment"
+  ]
+},
+
+"Paralysis (brain hemorrhage)": {
+  description: "Loss of muscle function due to bleeding in the brain.",
+  doctor: "Neurologist",
+  precautions: [
+    "Immediate medical care",
+    "Attend rehabilitation",
+    "Exercise carefully",
+    "Monitor recovery"
+  ]
+},
+
+"Urinary tract infection": {
+  description: "Infection affecting urinary organs.",
+  doctor: "Urologist",
+  precautions: [
+    "Drink more water",
+    "Maintain hygiene",
+    "Avoid holding urine",
+    "Take medicines"
+  ]
+},
+
+"Varicose veins": {
+  description: "Enlarged veins commonly appearing in legs.",
+  doctor: "Vascular Specialist",
+  precautions: [
+    "Exercise regularly",
+    "Elevate legs",
+    "Avoid standing long",
+    "Maintain healthy weight"
+  ]
+},
+
+"Dimorphic hemmorhoids(piles)": {
+  description: "Swollen veins in lower rectum causing pain and discomfort.",
+  doctor: "Proctologist",
+  precautions: [
+    "Eat fiber-rich food",
+    "Drink water",
+    "Avoid straining",
+    "Exercise regularly"
+  ]
+},
+  
 };
 
 export default diseaseInfo;
