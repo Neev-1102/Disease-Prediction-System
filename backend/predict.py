@@ -11,9 +11,9 @@ warnings.filterwarnings("ignore")
 # Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "best_bernoulli_naive_bayes_model.pkl")
 ENCODER_PATH = os.path.join(BASE_DIR, "label_encoder.pkl")
-FEATURES_PATH = os.path.join(BASE_DIR, "feature_names.json")
+FEATURES_PATH = os.path.join(BASE_DIR, "final_feature_cols.json")
 
 # Load once
 with open(MODEL_PATH, "rb") as f:
