@@ -1,74 +1,74 @@
 const express = require("express");
 const cors = require("cors");
 const { spawn } = require("child_process");
+const path = require("path");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("Disease Prediction API Running");
+// ─── In-memory user store (replace with DB in production) ───
+const users = new Map();
+// Pre-seed a demo user
+users.set("demo@health.com", { name: "Demo User", password: "demo123", age: "", gender: "" });
+
+// ─── Auth routes ─────────────────────────────────────────────
+app.post("/api/register", (req, res) => {
+  const { name, email, password, age, gender } = req.body;
+  if (!name || !email || !password)
+    return res.status(400).json({ error: "Name, email and password are required" });
+  if (users.has(email))
+    return res.status(409).json({ error: "Email already registered" });
+  users.set(email, { name, password, age: age || "", gender: gender || "" });
+  res.json({ success: true, message: "Account created successfully" });
 });
 
-app.post("/predict", (req, res) => {
-    const symptoms = req.body.symptoms;
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body;
+  const user = users.get(email);
+  if (!user || user.password !== password)
+    return res.status(401).json({ error: "Invalid email or password" });
+  res.json({
+    success: true,
+    user: { name: user.name, email, age: user.age, gender: user.gender }
+  });
+});
 
-    if (!symptoms || symptoms.length === 0) {
-        return res.status(400).json({
-            error: "Select at least one symptom"
-        });
+// ─── Prediction route ────────────────────────────────────────
+app.post("/api/predict", (req, res) => {
+  const { symptoms, user } = req.body;
+
+  if (!symptoms || symptoms.length === 0)
+    return res.status(400).json({ error: "Select at least one symptom" });
+
+  const payload = JSON.stringify({ symptoms, user: user || {} });
+
+  const py = spawn("python3", [
+    path.join(__dirname, "predict.py"),
+    payload
+  ], {
+    env: { ...process.env, PYTHONUNBUFFERED: "1" }
+  });
+
+  let result = "";
+  let errLog = "";
+
+  py.stdout.on("data", (d) => (result += d.toString()));
+  py.stderr.on("data", (d) => (errLog += d.toString()));
+
+  py.on("close", (code) => {
+    if (errLog) console.error("Python stderr:", errLog);
+    if (code !== 0)
+      return res.status(500).json({ error: "Model evaluation error", details: errLog });
+
+    try {
+      const parsed = JSON.parse(result.trim());
+      res.json(parsed);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to parse prediction output", raw: result });
     }
-
-    // CRITICAL UPDATE: Call python3 and explicitly pass unbuffered environment flags
-    const py = spawn("python3", ["predict.py", JSON.stringify(symptoms)], {
-        env: { ...process.env, PYTHONUNBUFFERED: "1" }
-    });
-
-    let result = "";
-    let error = "";
-
-    py.stdout.on("data", (data) => {
-        result += data.toString();
-    });
-
-    py.stderr.on("data", (data) => {
-        error += data.toString();
-    });
-
-    py.on("close", (code) => {
-        console.log(`Python process exited with code ${code}`);
-        console.log("Python Output Matrix:");
-        console.log(result);
-
-        if (error) {
-            console.log("Python Error Stream Log:");
-            console.log(error);
-        }
-
-        // Catch explicit script internal execution failures
-        if (code !== 0) {
-            return res.status(500).json({
-                error: "Internal model evaluation error",
-                details: error || "Python script exited with an error code."
-            });
-        }
-
-        try {
-            // Reconstruct string stream back to a valid frontend JSON payload
-            const parsedData = JSON.parse(result.trim());
-            res.json(parsedData);
-        } catch (err) {
-            console.log("JSON Parse Error on Node Server:", err);
-            res.status(500).json({
-                error: "Prediction streaming structural failure",
-                output: result
-            });
-        }
-    });
+  });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running smoothly on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
