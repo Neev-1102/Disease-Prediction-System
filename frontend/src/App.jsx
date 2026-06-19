@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
 import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 import symptoms from "./symptoms";
 
@@ -108,7 +109,7 @@ function App() {
       }
 
       setValidationError("");
-      setLoading(true);
+      loading(true);
 
       const res = await axios.post(`${API_BASE_URL}/predict`, { 
         symptoms: symptomArray,
@@ -131,61 +132,133 @@ function App() {
 
   const downloadReport = () => {
     if (!result) return;
+    
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("MediScan AI - Diagnostic Health Report", 20, 20);
+
+    doc.setFillColor(74, 114, 159);
+    doc.rect(14, 15, 182, 24, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("In-Patient Diagnostic Summary", 20, 26);
     doc.setFontSize(12);
-    doc.text(`Patient: ${user?.name || "Verified User"}`, 20, 35);
-    doc.text(`Primary Diagnosis: ${result.disease}`, 20, 45);
-    doc.text(`Confidence Level: ${result.confidence}%`, 20, 55);
-    doc.text(`Recommended Specialist: ${result.specialist}`, 20, 65);
+    doc.setFont("helvetica", "normal");
+    doc.text("Patient's Electronic Copy", 20, 33);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("MEDISCAN AI CLINICS", 190, 26, { align: "right" });
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Automated Health Network", 190, 32, { align: "right" });
+
+    doc.setTextColor(51, 51, 51);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Patient Demographics", 14, 49);
+
+    const currentDate = new Date().toLocaleDateString();
+
+    doc.autoTable({
+      startY: 53,
+      theme: "plain",
+      styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.2 },
+      columnStyles: {
+        0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 30 },
+        1: { width: 32 },
+        2: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
+        3: { width: 32 },
+        4: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
+        5: { width: 32 },
+      },
+      body: [
+        ["Name", user?.name || "Verified Guest", "Gender", user?.gender || "N/A", "Location", "Outpatient Ward"],
+        ["ID No.", "MS-" + Math.floor(100000 + Math.random() * 900000), "Date of Evaluation", currentDate, "Nationality", "Indian"],
+        ["Visit No.", "2026-9-0" + Math.floor(1 + Math.random() * 9), "Age", (user?.age ? `${user.age} Years` : "N/A"), "Race", "Asian"]
+      ],
+    });
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Medical & Diagnostic History", 14, doc.lastAutoTable.finalY + 12);
+
     const symptomText = selectedSymptoms.map((s) => s.label).join(", ");
-    doc.text(`Symptoms Provided: ${symptomText}`, 20, 80);
-    doc.save(`MediScan_Report_${result.disease.replace(/\s+/g, "_")}.pdf`);
+
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 16,
+      theme: "plain",
+      styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.2 },
+      columnStyles: {
+        0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 45 },
+        1: { textHeading: "paragraph" }
+      },
+      body: [
+        ["Admission Indicators / Symptoms", symptomText],
+        ["Principal Evaluating Specialist", result.specialist || "General Physician"],
+        ["Reason for Evaluation", "Patient presented with a dense array of tracking acute markers."],
+        ["Primary Predicted Diagnosis", `${result.disease.toUpperCase()} (${result.confidence}% Confidence Level)`],
+        ["Secondary Alternative Target", result.top3?.[1] ? `${result.top3[1].disease} (${result.top3[1].confidence}%)` : "N.A."],
+        ["Other Differential Targets", result.top3?.[2] ? `${result.top3[2].disease} (${result.top3[2].confidence}%)` : "N.A."],
+        ["Clinical Precautions / Advice", (result.precautions || []).join(", ")]
+      ],
+    });
+
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, pageHeight - 20, 196, pageHeight - 20);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont("helvetica", "normal");
+    doc.text("1-800-MEDISCAN // www.mediscan-ai-system.vercel.app", 105, pageHeight - 12, { align: "center" });
+    doc.text("Page 1", 190, pageHeight - 12, { align: "right" });
+
+    doc.save(`MediScan_Discharge_Summary_${user.name}.pdf`);
   };
 
-  // ─── VIEW 1: AUTHENTICATION INTERFACE (DARK COMPACT WINDOW) ──────
+  // ─── VIEW 1: AUTHENTICATION INTERFACE ───────────────────────────
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#111827] flex justify-center items-center p-5">
-        <div className="bg-[#1f2937] text-white shadow-2xl rounded-2xl p-8 w-full max-w-md border border-slate-700/50">
-          <div className="flex flex-col items-center mb-6">
-            <div className="bg-blue-600/20 text-blue-400 p-3 rounded-xl mb-3 text-2xl">📋</div>
-            <h1 className="text-3xl font-bold tracking-tight text-center">MediScan AI</h1>
-            <p className="text-slate-400 text-sm mt-1 text-center">Intelligent Health Analysis</p>
+      <div className="auth-screen">
+        <div className="auth-card">
+          <div className="auth-header">
+            <div className="auth-icon">📋</div>
+            <h1 className="auth-title">MediScan AI</h1>
+            <p className="auth-subtitle">Intelligent Health Analysis</p>
           </div>
 
-          <h2 className="text-xl font-semibold mb-4 text-center">
+          <h2 className="auth-heading-context">
             {isRegistering ? "Create your health profile" : "Welcome back"}
           </h2>
 
-          {authError && <div className="mb-4 p-3 bg-red-900/30 border border-red-500/40 text-red-400 rounded-lg text-sm text-center font-medium">{authError}</div>}
-          {authSuccess && <div className="mb-4 p-3 bg-green-900/30 border border-green-500/40 text-green-400 rounded-lg text-sm text-center font-medium">{authSuccess}</div>}
+          {authError && <div className="alert-error">{authError}</div>}
+          {authSuccess && <div className="alert-success">{authSuccess}</div>}
 
-          <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-4">
+          <form onSubmit={isRegistering ? handleRegister : handleLogin} className="auth-form">
             {isRegistering && (
               <div>
-                <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Full Name</label>
-                <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="John Doe" />
+                <label className="auth-field-label">Full Name</label>
+                <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="auth-input-element" placeholder="Neev Rathod" />
               </div>
             )}
             <div>
-              <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Email Address</label>
-              <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="you@example.com" />
+              <label className="auth-field-label">Email Address</label>
+              <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="auth-input-element" placeholder="you@health.com" />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Password</label>
-              <input type="password" name="password" required value={formData.password} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="••••••••" />
+              <label className="auth-field-label">Password</label>
+              <input type="password" name="password" required value={formData.password} onChange={handleInputChange} className="auth-input-element" placeholder="••••••••" />
             </div>
             {isRegistering && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="auth-split-row">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Age</label>
-                  <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="25" />
+                  <label className="auth-field-label">Age</label>
+                  <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="auth-input-element" placeholder="25" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Gender</label>
-                  <select name="gender" value={formData.gender} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500">
+                  <label className="auth-field-label">Gender</label>
+                  <select name="gender" value={formData.gender} onChange={handleInputChange} className="auth-input-element">
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -195,18 +268,18 @@ function App() {
               </div>
             )}
 
-            <button type="submit" className="w-full mt-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 rounded-lg transition duration-200 shadow-lg">
+            <button type="submit" className="auth-submit-btn">
               {isRegistering ? "Sign Up →" : "Sign In →"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-slate-400">
+          <div className="auth-toggle-msg">
             {isRegistering ? "Already have an account? " : "Don't have an account? "}
-            <button onClick={() => { setIsRegistering(!isRegistering); setAuthError(""); setAuthSuccess(""); }} className="text-blue-400 font-semibold hover:underline">
+            <button onClick={() => { setIsRegistering(!isRegistering); setAuthError(""); setAuthSuccess(""); }} className="auth-toggle-link">
               {isRegistering ? "Log In here" : "Create one"}
             </button>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-700/50 text-center text-xs text-slate-500 font-mono">
+          <div className="auth-demo-banner">
             Demo: demo@health.com / demo123
           </div>
         </div>
@@ -214,121 +287,176 @@ function App() {
     );
   }
 
-  // ─── VIEW 2: MEDICAL ANALYTICS INTERFACE (PREMIUM SLATE BLUE THEME) ───
+  // ─── VIEW 2: MEDICAL ANALYTICS INTERFACE ────────────────────────
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 p-4 sm:p-6 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="app-container">
+      <div className="app-max-viewport">
         
         {/* TOP STATUS NAVIGATION BAR */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-[#1e293b] rounded-2xl p-4 border border-slate-700/40 gap-4 shadow-xl">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl bg-slate-900/50 p-2 rounded-xl">🏥</span>
+        <div className="nav-header">
+          <div className="nav-brand">
+            <span className="nav-logo-box">🏥</span>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">MediScan AI</h1>
-              <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Intelligent Health Analysis</p>
+              <h1 className="nav-title">MediScan AI</h1>
+              <p className="nav-subtitle">Intelligent Health Analysis</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 self-end sm:self-auto">
+          <div className="nav-action-cluster">
             {result && (
-              <button onClick={() => setResult(null)} className="text-xs bg-[#0f172a] border border-slate-700 px-4 py-2 hover:bg-slate-800 transition rounded-xl text-slate-300">
+              <button onClick={() => setResult(null)} className="btn-back">
                 ← New Analysis
               </button>
             )}
-            <div className="bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-2 text-xs flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span className="text-slate-300 font-medium">{user.name}</span>
+            <div className="user-pill">
+              <span className="user-pulse-indicator"></span>
+              <span>{user.name}</span>
             </div>
-            <button onClick={handleLogout} className="text-xs bg-red-950/40 hover:bg-red-900/30 border border-red-500/20 text-red-400 px-4 py-2 rounded-xl transition">
+            <button onClick={handleLogout} className="btn-logout">
               Logout
             </button>
           </div>
         </div>
 
         {!result ? (
-          /* INPUT COLLECTION CARD CONTAINER */
-          <div className="bg-[#1e293b] rounded-2xl border border-slate-700/40 p-6 shadow-xl space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-slate-200">Run System Evaluation Matrix</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Select any patient-reported indications below. A minimum of 3 symptoms is mathematically required to satisfy evaluation metrics.</p>
-            </div>
-
-            <div className="text-slate-900">
-              <Select
-                isMulti
-                options={options}
-                onChange={handleSymptomChange}
-                value={selectedSymptoms}
-                placeholder="Type or select symptom tags..."
-                className="basic-multi-select"
-                styles={{
-                  control: (base) => ({ ...base, background: '#0f172a', borderColor: '#334155', color: '#fff', borderRadius: '0.75rem', padding: '4px' }),
-                  menu: (base) => ({ ...base, background: '#0f172a', borderRadius: '0.75rem', overflow: 'hidden' }),
-                  option: (base, state) => ({ ...base, backgroundColor: state.isFocused ? '#1d4ed8' : '#0f172a', color: '#fff' }),
-                  multiValue: (base) => ({ ...base, background: '#1e293b', border: '1px solid #475569', borderRadius: '0.375rem' }),
-                  multiValueLabel: (base) => ({ ...base, color: '#f1f5f9' }),
-                  multiValueRemove: (base) => ({ ...base, color: '#94a3b8', ':hover': { backgroundColor: '#ef4444', color: '#fff' } }),
-                }}
-              />
-            </div>
-
-            {validationError && (
-              <div className="p-3 bg-red-950/40 border border-red-500/30 text-red-400 rounded-xl text-xs font-medium text-center">
-                {validationError}
+          /* INITIAL CONTAINER INCLUDES LANDING HERO + CORE INPUT ENGINE */
+          <div className="flex flex-col gap-6">
+            
+            {/* ─── NEW CLINICAL HERO ACCORDION BANNER ──────────────── */}
+            <section className="medical-hero rounded-2xl">
+              <div className="medical-hero-container">
+                <div className="hero-text-content">
+                  <h1 className="hero-main-title">MED CENTER</h1>
+                  <h2 className="hero-tagline">Changing Lives, Right Here</h2>
+                  <p className="hero-description">
+                    Providing advanced, technology-driven healthcare with a personal touch. 
+                    Discover our innovative approach to patient care and machine learning diagnostics.
+                  </p>
+                  <a href="#evaluation-matrix" className="btn-clinical-primary no-underline text-center">
+                    Start System Scan ↓
+                  </a>
+                </div>
+                
+                {/* Visual Graphic Representation */}
+                <div className="hidden md:flex justify-center items-center">
+                  <img 
+                    src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=600&q=80" 
+                    alt="Doctor" 
+                    className="max-h-[380px] object-contain drop-shadow-2xl"
+                  />
+                </div>
               </div>
-            )}
+            </section>
 
-            <button onClick={predictDisease} disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium py-3 rounded-xl transition duration-200 shadow-lg disabled:opacity-40">
-              {loading ? "Evaluating Diagnostics..." : "Evaluate Diagnostic Matrix"}
-            </button>
+            {/* INPUT COLLECTION CARD CONTAINER */}
+            <div id="evaluation-matrix" className="matrix-cardScroll scroll-mt-6 matrix-card">
+              <div>
+                <h2 className="matrix-title">Run System Evaluation Matrix</h2>
+                <p className="matrix-subtitle">Select any patient-reported indications below. A minimum of 3 symptoms is mathematically required to satisfy evaluation metrics.</p>
+              </div>
+
+              <div className="select-wrapper-dropdown">
+                <Select
+                  isMulti
+                  options={options}
+                  onChange={handleSymptomChange}
+                  value={selectedSymptoms}
+                  placeholder="Type or select symptom tags..."
+                  className="basic-multi-select"
+                  styles={{
+                    control: (base) => ({ ...base, background: '#0f172a', borderColor: '#334155', color: '#fff', borderRadius: '0.75rem', padding: '4px' }),
+                    menu: (base) => ({ ...base, background: '#0f172a', borderRadius: '0.75rem', overflow: 'hidden' }),
+                    option: (base, state) => ({ ...base, backgroundColor: state.isFocused ? '#1d4ed8' : '#0f172a', color: '#fff' }),
+                    multiValue: (base) => ({ ...base, background: '#1e293b', border: '1px solid #475569', borderRadius: '0.375rem' }),
+                    multiValueLabel: (base) => ({ ...base, color: '#f1f5f9' }),
+                    multiValueRemove: (base) => ({ ...base, color: '#94a3b8', ':hover': { backgroundColor: '#ef4444', color: '#fff' } }),
+                  }}
+                />
+              </div>
+
+              {validationError && (
+                <div className="validation-error-banner">
+                  {validationError}
+                </div>
+              )}
+
+              <button onClick={predictDisease} disabled={loading} className="btn-evaluate">
+                {loading ? "Evaluating Diagnostics..." : "Evaluate Diagnostic Matrix"}
+              </button>
+            </div>
+
+            {/* ─── NEW COMPREHENSIVE CLINICAL SERVICE TILES ─────────── */}
+            <div className="services-section rounded-2xl border border-slate-800 bg-slate-900/50">
+              <h3 className="services-header-title text-white">Comprehensive Healthcare Services</h3>
+              <p className="services-header-subtitle">Advanced analytic workflows engineered to pinpoint underlying physical pathways quickly.</p>
+              
+              <div className="services-matrix-grid">
+                <div className="service-clinical-card">
+                  <div className="service-icon-frame">🩺</div>
+                  <h4 className="service-card-title">Family Care</h4>
+                  <p className="service-card-description">Tailored health checkups, chronic track profiles, and holistic wellness checks.</p>
+                </div>
+                <div className="service-clinical-card">
+                  <div className="service-icon-frame">⚡</div>
+                  <h4 className="service-card-title">Urgent Care</h4>
+                  <p className="service-card-description">Immediate, direct medical parsing vectors for non-life-threatening indications.</p>
+                </div>
+                <div className="service-clinical-card">
+                  <div className="service-icon-frame">🤖</div>
+                  <h4 className="service-card-title">AI Diagnostics</h4>
+                  <p className="service-card-description">Deep automated matrix pattern analytics for rapid anomaly isolation results.</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         ) : (
           /* RESPONSE VISUALIZATION REPORT GRID DISPLAY */
-          <div className="space-y-5">
+          <div className="results-stack">
             
-            {/* MATCHED LOCAL SCREENSHOT STYLING: THE IVORY VANILLA HIGHLIGHT BOX */}
-            <div className="bg-[#fefce8] text-slate-950 rounded-3xl p-6 sm:p-8 relative border border-amber-200 shadow-xl">
-              <div className="absolute top-6 right-6 bg-[#ea580c] text-white text-[10px] font-bold tracking-widest px-3 py-1.5 rounded-xl uppercase">
+            {/* THE IVORY VANILLA HIGHLIGHT BOX */}
+            <div className="ivory-highlight-panel">
+              <div className="urgency-badge">
                 {result.urgency || "MODERATE"} PRIORITY
               </div>
               
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Primary Diagnosis</span>
-              <h2 className="text-4xl font-black text-slate-900 mt-1 mb-1 tracking-tight capitalize">{result.disease}</h2>
-              <p className="text-xs text-slate-500 mb-6">Category: {result.category || "General Medicine"}</p>
+              <span className="panel-tagline">Primary Diagnosis</span>
+              <h2 className="primary-disease-heading">{result.disease}</h2>
+              <p className="panel-category">Category: {result.category || "General Medicine"}</p>
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-amber-200/80 pb-6 mb-6">
-                <div className="flex-1 space-y-3.5">
+              <div className="analysis-split-block">
+                <div className="distribution-bars-container">
                   {result.top3 && result.top3.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-4 text-xs font-semibold text-slate-600">
-                      <span className="w-36 text-slate-500 capitalize truncate">
+                    <div key={idx} className="metric-bar-row">
+                      <span className="metric-label-slot">
                         {idx === 0 ? "Primary: " : idx === 1 ? "2nd: " : "3rd: "}{item.disease}
                       </span>
-                      <div className="flex-1 bg-slate-200 rounded-full h-2 overflow-hidden">
-                        <div className="bg-indigo-600 h-2 rounded-full transition-all duration-500" style={{ width: `${item.confidence}%` }} />
+                      <div className="metric-track-bg">
+                        <div className="metric-fill-indigo" style={{ width: `${item.confidence}%` }} />
                       </div>
-                      <span className="w-10 text-right font-bold text-slate-900">{item.confidence}%</span>
+                      <span className="metric-percentage-label">{item.confidence}%</span>
                     </div>
                   ))}
                 </div>
                 
-                <div className="flex flex-col items-center sm:items-end justify-center min-w-[140px]">
-                  <span className="text-5xl font-black text-[#ea580c] tracking-tighter">{result.confidence}%</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">confidence</span>
+                <div className="radial-percentage-box">
+                  <span className="giant-percentage-text">{result.confidence}%</span>
+                  <span className="sub-percentage-meta">confidence</span>
                 </div>
               </div>
 
               {/* THREE DYNAMIC RANKING CARDS LOOP */}
               {result.top3 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <div className="tri-card-grid">
                   {result.top3.map((item, idx) => (
-                    <div key={idx} className="bg-[#1e293b] text-white p-4 rounded-xl border border-slate-700/30 flex flex-col justify-between">
+                    <div key={idx} className="rank-card">
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RANK #{idx + 1}</span>
-                        <h4 className="text-sm font-bold capitalize text-slate-300 mt-0.5 truncate">{item.disease}</h4>
+                        <span className="rank-card-meta">RANK #{idx + 1}</span>
+                        <h4 className="rank-card-title">{item.disease}</h4>
                       </div>
-                      <div className="mt-4">
-                        <span className="text-2xl font-black text-blue-400 tracking-tight">{item.confidence}%</span>
-                        <div className="w-full bg-slate-800 rounded-full h-1 mt-1.5 overflow-hidden">
-                          <div className="bg-blue-500 h-1 rounded-full" style={{ width: `${item.confidence}%` }} />
+                      <div className="rank-card-score-wrapper">
+                        <span className="rank-card-percentage">{item.confidence}%</span>
+                        <div className="rank-card-bar-bg">
+                          <div className="rank-card-bar-fill" style={{ width: `${item.confidence}%` }} />
                         </div>
                       </div>
                     </div>
@@ -337,29 +465,29 @@ function App() {
               )}
             </div>
 
-            {/* LOWER TWO-COLUMN SYSTEM SPLIT METADATA BLOCK COMPONENT CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* LOWER TWO-COLUMN SPLIT */}
+            <div className="lower-metadata-grid">
               
               {/* SPECIALIST RECOM CARD */}
-              <div className="bg-[#1e293b] border border-slate-700/40 p-5 rounded-2xl flex flex-col justify-between shadow-xl">
+              <div className="column-info-card">
                 <div>
-                  <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-3">Recommended Specialist</h3>
-                  <p className="text-xl font-bold text-slate-100 capitalize tracking-tight">{result.specialist || "General Physician"}</p>
-                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">The active vector parameters correlate directly with diagnostic profiles belonging to this medical track. Booking an evaluation window is suggested.</p>
+                  <h3 className="column-card-title">Recommended Specialist</h3>
+                  <p className="specialist-text-output">{result.specialist || "General Physician"}</p>
+                  <p className="specialist-context-desc">The active vector parameters correlate directly with diagnostic profiles belonging to this medical track. Booking an evaluation window is suggested.</p>
                 </div>
-                <button onClick={downloadReport} className="w-full mt-6 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 py-2.5 text-xs font-medium rounded-xl transition">
+                <button onClick={downloadReport} className="btn-pdf-trigger">
                   📥 Download Report PDF Document
                 </button>
               </div>
 
-              {/* PRECAUTIONS LOGICAL ROW WRAPPER CARD */}
-              <div className="bg-[#1e293b] border border-slate-700/40 p-5 rounded-2xl shadow-xl">
-                <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-3">Precautions & Next Steps</h3>
-                <ul className="space-y-3 text-xs">
+              {/* PRECAUTIONS CARD */}
+              <div className="column-info-card">
+                <h3 className="column-card-title">Precautions & Next Steps</h3>
+                <ul className="precaution-list-wrapper">
                   {(result.precautions || []).map((item, index) => (
-                    <li key={index} className="flex items-start gap-2.5 text-slate-300 border-b border-slate-800/60 pb-2.5 last:border-0 last:pb-0">
-                      <span className="text-blue-400 font-bold">•</span>
-                      <span className="leading-relaxed">{item}</span>
+                    <li key={index} className="precaution-item-row">
+                      <span className="precaution-bullet">•</span>
+                      <span className="precaution-text-content">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -369,15 +497,15 @@ function App() {
           </div>
         )}
 
-        {/* LOG STORAGE HISTORY SYSTEM LIST CONTAINER FEED */}
+        {/* LOG STORAGE HISTORY CONTAINER */}
         {history.length > 0 && (
-          <div className="bg-[#1e293b] rounded-2xl border border-slate-700/40 p-5 shadow-xl">
-            <h3 className="text-sm font-bold text-slate-300 mb-3 tracking-tight">Personal Prediction Logs</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto pr-1">
+          <div className="history-feed-container">
+            <h3 className="history-heading">Personal Prediction Logs</h3>
+            <div className="history-responsive-scroll">
               {history.map((item, index) => (
-                <div key={index} className="bg-[#0f172a] border border-slate-800 p-3 rounded-xl flex justify-between items-center text-xs">
-                  <span className="capitalize font-semibold text-slate-300 truncate max-w-[130px]">{item.disease}</span>
-                  <span className="font-mono bg-blue-950/60 text-blue-400 font-bold px-2 py-0.5 rounded border border-blue-900/40">{item.confidence}%</span>
+                <div key={index} className="history-log-pill">
+                  <span className="history-disease-meta">{item.disease}</span>
+                  <span className="history-score-badge">{item.confidence}%</span>
                 </div>
               ))}
             </div>
