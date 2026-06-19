@@ -130,7 +130,7 @@ function App() {
     }
   };
 
-  const downloadReport = () => {
+ const downloadReport = () => {
   if (!result) return;
   
   const doc = new jsPDF();
@@ -189,7 +189,7 @@ function App() {
   doc.setFontSize(11);
   doc.text("Medical & Diagnostic History", 14, doc.lastAutoTable.finalY + 12);
 
-  // Extract selected symptoms string array cleanly
+  // FIXED: Extracted symptoms string is now defined BEFORE it is injected below!
   const symptomText = selectedSymptoms.map((s) => s.label).join(", ");
 
   doc.autoTable({
@@ -222,8 +222,8 @@ function App() {
   doc.text("1-800-MEDISCAN // www.mediscan-ai-system.vercel.app", 105, pageHeight - 12, { align: "center" });
   doc.text("Page 1", 190, pageHeight - 12, { align: "right" });
 
-  // Trigger Save File Stream Execution
-  doc.save(`MediScan_Discharge_Summary_${user.name}.pdf`);
+  // Trigger Save File Stream Execution (With safety optional chain)
+  doc.save(`MediScan_Discharge_Summary_${user?.name || "Guest"}.pdf`);
 };
 
   // ─── VIEW 1: AUTHENTICATION INTERFACE (DARK COMPACT WINDOW) ──────
@@ -248,12 +248,12 @@ function App() {
             {isRegistering && (
               <div>
                 <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Full Name</label>
-                <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="John Doe" />
+                <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="e.g Neev Rathod" />
               </div>
             )}
             <div>
               <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Email Address</label>
-              <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="you@example.com" />
+              <input type="email" name="email" required value={formData.email} onChange={handleInputChange} className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-blue-500" placeholder="you@.com" />
             </div>
             <div>
               <label className="text-xs font-bold text-slate-400 tracking-wider uppercase block mb-1">Password</label>
