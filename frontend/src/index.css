@@ -1,110 +1,56 @@
-
+@import "tailwindcss";
 
 /* Global Variable Definitions */
-
 :root {
-
   --bg-main: #0f172a;
-
   --accent-glow: rgba(14, 165, 233, 0.15);
-
   --border-focus: rgba(14, 165, 233, 0.6);
-
 }
 
-
-
-*, *::before, *::after {
-
-  box-sizing: border-box;
-
+*, *::before, *::after { 
+  box-sizing: border-box; 
 }
 
-
-
-body {
-
-  margin: 0;
-
-  background-color: var(--bg-main);
-
+body { 
+  margin: 0; 
+  background-color: var(--bg-main); 
   font-family: system-ui, -apple-system, sans-serif;
-
   -webkit-font-smoothing: antialiased;
-
 }
-
-
 
 /* Premium Glow Effects for Inputs and Select Fields */
-
-input, select, button {
-
-  font-family: inherit;
-
+input, select, button { 
+  font-family: inherit; 
 }
 
-
-
-input:focus, select:focus {
-
-  border-color: var(--border-focus) !important;
-
+input:focus, select:focus { 
+  border-color: var(--border-focus) !important; 
   box-shadow: 0 0 0 4px var(--accent-glow) !important;
-
   outline: none;
-
 }
-
-
 
 /* Micro-interactions for Interactive Cards and Buttons */
-
 button {
-
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
 }
 
-
-
-button:hover:not(:disabled) {
-
-  opacity: 0.95;
-
-  transform: translateY(-1px);
-
+button:hover:not(:disabled) { 
+  opacity: 0.95; 
+  transform: translateY(-1px); 
   filter: brightness(1.1);
-
 }
 
-
-
-button:active:not(:disabled) {
-
-  transform: translateY(1px);
-
+button:active:not(:disabled) { 
+  transform: translateY(1px); 
 }
-
-
 
 /* Custom Animation Utilities for Layouts */
-
 @keyframes shake {
-
   0%, 100% { transform: translateX(0); }
-
   25% { transform: translateX(-4px); }
-
   75% { transform: translateX(4px); }
-
 }
-
-
 
 .animate-shake {
-
   animation: shake 0.3s ease-in-out;
-
 }
-
