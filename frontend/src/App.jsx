@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Select from "react-select";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 import symptoms from "./symptoms";
 
@@ -131,108 +131,104 @@ function App() {
   };
 
 const downloadReport = () => {
-  if (!result) return;
-  
-  // Explicitly fallback to a safe guest identifier if names are missing
-  const patientName = user?.name || "Verified Guest";
-  const doc = new jsPDF();
+    if (!result) return;
+    
+    const patientName = user?.name || "Verified Guest";
+    const doc = new jsPDF();
 
-  // ─── 1. HEADER BANNER ──────────────────────────────────────────
-  doc.setFillColor(74, 114, 159); 
-  doc.rect(14, 15, 182, 24, "F");
+    // 1. Header Banner Graphic Setup
+    doc.setFillColor(74, 114, 159); 
+    doc.rect(14, 15, 182, 24, "F");
 
-  // Header Typography
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("In-Patient Diagnostic Summary", 20, 26);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  doc.text("Patient's Electronic Copy", 20, 33);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("In-Patient Diagnostic Summary", 20, 26);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text("Patient's Electronic Copy", 20, 33);
 
-  // Hospital Branding Text (Right Aligned)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("MEDISCAN AI CLINICS", 190, 26, { align: "right" });
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text("Automated Health Network", 190, 32, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("MEDISCAN AI CLINICS", 190, 26, { align: "right" });
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("Automated Health Network", 190, 32, { align: "right" });
 
-  // ─── 2. PATIENT DEMOGRAPHICS MATRIX ───────────────────────────
-  doc.setTextColor(51, 51, 51);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("Patient Demographics", 14, 49);
+    // 2. Patient Demographics Subheading
+    doc.setTextColor(51, 51, 51);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Patient Demographics", 14, 49);
 
-  const currentDate = new Date().toLocaleDateString();
+    const currentDate = new Date().toLocaleDateString();
 
-  // Generate Table 1 safely
-  doc.autoTable({
-    startY: 53,
-    theme: "plain",
-    styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.2 },
-    columnStyles: {
-      0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 30 },
-      1: { width: 32 },
-      2: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
-      3: { width: 32 },
-      4: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
-      5: { width: 32 },
-    },
-    body: [
-      ["Name", patientName, "Gender", user?.gender || "N/A", "Location", "Outpatient Ward"],
-      ["ID No.", "MS-" + Math.floor(100000 + Math.random() * 900000), "Date of Evaluation", currentDate, "Nationality", "Indian"],
-      ["Visit No.", "2026-06-01", "Age", (user?.age ? `${user.age} Years` : "N/A"), "Race", "Asian"]
-    ],
-  });
+    // Render Table 1 Explicitly using the production safe function import
+    autoTable(doc, {
+      startY: 53,
+      theme: "plain",
+      styles: { fontSize: 9, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.2 },
+      columnStyles: {
+        0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 30 },
+        1: { width: 32 },
+        2: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
+        3: { width: 32 },
+        4: { fontStyle: "bold", fillColor: [230, 238, 245], width: 28 },
+        5: { width: 32 },
+      },
+      body: [
+        ["Name", patientName, "Gender", user?.gender || "N/A", "Location", "Outpatient Ward"],
+        ["ID No.", "MS-" + Math.floor(100000 + Math.random() * 900000), "Date of Evaluation", currentDate, "Nationality", "Indian"],
+        ["Visit No.", "2026-06-01", "Age", (user?.age ? `${user.age} Years` : "N/A"), "Race", "Asian"]
+      ],
+    });
 
-  // Calculate safe programmatic height threshold position
-  let currentY = doc.previousAutoTable ? doc.previousAutoTable.finalY : 80;
+    // Extract dynamic page final Y coordinate calculation
+    let currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 80;
 
-  // ─── 3. CLINICAL EVALUATION METRICS MATRIX ────────────────────
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("Medical & Diagnostic History", 14, currentY + 12);
+    // 3. Clinical Metrics Block Subheading
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text("Medical & Diagnostic History", 14, currentY + 12);
 
-  const symptomText = selectedSymptoms && selectedSymptoms.length > 0 
-    ? selectedSymptoms.map((s) => s.label).join(", ") 
-    : "No markers declared";
+    const symptomText = selectedSymptoms && selectedSymptoms.length > 0 
+      ? selectedSymptoms.map((s) => s.label).join(", ") 
+      : "No markers declared";
 
-  // Generate Table 2 safely with fixed styling parameters
-  doc.autoTable({
-    startY: currentY + 16,
-    theme: "plain",
-    styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.2 },
-    columnStyles: {
-      0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 45 },
-      1: { cellWidth: 'auto' } // Fixed the custom non-standard parameter bug here
-    },
-    body: [
-      ["Admission Indicators / Symptoms", symptomText],
-      ["Principal Evaluating Specialist", result.specialist || "General Physician"],
-      ["Reason for Evaluation", "Patient presented with a dense array of tracking acute markers."],
-      ["Primary Predicted Diagnosis", `${(result.disease || "N/A").toUpperCase()} (${result.confidence || 0}% Confidence Level)`],
-      ["Secondary Alternative Target", result.top3?.[1] ? `${result.top3[1].disease} (${result.top3[1].confidence}%)` : "N.A."],
-      ["Other Differential Targets", result.top3?.[2] ? `${result.top3[2].disease} (${result.top3[2].confidence}%)` : "N.A."],
-      ["Clinical Precautions / Advice", result.precautions && result.precautions.length > 0 ? result.precautions.join(", ") : "None specified"]
-    ],
-  });
+    // Render Table 2 Explicitly
+    autoTable(doc, {
+      startY: currentY + 16,
+      theme: "plain",
+      styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.2 },
+      columnStyles: {
+        0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 45 },
+        1: { cellWidth: 'auto' }
+      },
+      body: [
+        ["Admission Indicators / Symptoms", symptomText],
+        ["Principal Evaluating Specialist", result.specialist || "General Physician"],
+        ["Reason for Evaluation", "Patient presented with a dense array of tracking acute markers."],
+        ["Primary Predicted Diagnosis", `${(result.disease || "N/A").toUpperCase()} (${result.confidence || 0}% Confidence Level)`],
+        ["Secondary Alternative Target", result.top3?.[1] ? `${result.top3[1].disease} (${result.top3[1].confidence}%)` : "N.A."],
+        ["Other Differential Targets", result.top3?.[2] ? `${result.top3[2].disease} (${result.top3[2].confidence}%)` : "N.A."],
+        ["Clinical Precautions / Advice", result.precautions && result.precautions.length > 0 ? result.precautions.join(", ") : "None specified"]
+      ],
+    });
 
-  // ─── 4. CLINICAL FOOTER META STRIP ────────────────────────────
-  const pageHeight = doc.internal.pageSize.height;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(14, pageHeight - 20, 196, pageHeight - 20);
-  
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  doc.setFont("helvetica", "normal");
-  doc.text("1-800-MEDISCAN // www.mediscan-ai-system.vercel.app", 105, pageHeight - 12, { align: "center" });
-  doc.text("Page 1", 190, pageHeight - 12, { align: "right" });
+    // 4. Report Footer Strip
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setDrawColor(200, 200, 200);
+    doc.line(14, pageHeight - 20, 196, pageHeight - 20);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont("helvetica", "normal");
+    doc.text("1-800-MEDISCAN // www.mediscan-ai-system.vercel.app", 105, pageHeight - 12, { align: "center" });
+    doc.text("Page 1", 190, pageHeight - 12, { align: "right" });
 
-  // Stream deployment download sequence to system directory
-  doc.save(`MediScan_Discharge_Summary_${patientName.replace(/\s+/g, "_")}.pdf`);
-};
-
+    // Download standard file stream execution
+    doc.save(`MediScan_Discharge_Summary_${patientName.replace(/\s+/g, "_")}.pdf`);
+  };
   // ─── VIEW 1: AUTHENTICATION INTERFACE (DARK COMPACT WINDOW) ──────
   if (!user) {
     return (
