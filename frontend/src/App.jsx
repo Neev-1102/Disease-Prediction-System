@@ -130,13 +130,15 @@ function App() {
     }
   };
 
- const downloadReport = () => {
+const downloadReport = () => {
   if (!result) return;
   
+  // Explicitly fallback to a safe guest identifier if names are missing
+  const patientName = user?.name || "Verified Guest";
   const doc = new jsPDF();
 
-  // ─── 1. HEADER BANNER (VIBRANT BLUE) ──────────────────────────
-  doc.setFillColor(74, 114, 159); // Matches the deep slate blue in the image
+  // ─── 1. HEADER BANNER ──────────────────────────────────────────
+  doc.setFillColor(74, 114, 159); 
   doc.rect(14, 15, 182, 24, "F");
 
   // Header Typography
@@ -162,9 +164,9 @@ function App() {
   doc.setFont("helvetica", "bold");
   doc.text("Patient Demographics", 14, 49);
 
-  // Formatting timestamp for the Visit parameter row
   const currentDate = new Date().toLocaleDateString();
 
+  // Generate Table 1 safely
   doc.autoTable({
     startY: 53,
     theme: "plain",
@@ -178,36 +180,41 @@ function App() {
       5: { width: 32 },
     },
     body: [
-      ["Name", user?.name || "Verified Guest", "Gender", user?.gender || "N/A", "Location", "Outpatient Ward"],
+      ["Name", patientName, "Gender", user?.gender || "N/A", "Location", "Outpatient Ward"],
       ["ID No.", "MS-" + Math.floor(100000 + Math.random() * 900000), "Date of Evaluation", currentDate, "Nationality", "Indian"],
-      ["Visit No.", "2026-9-0" + Math.floor(1 + Math.random() * 9), "Age", (user?.age ? `${user.age} Years` : "N/A"), "Race", "Asian"]
+      ["Visit No.", "2026-06-01", "Age", (user?.age ? `${user.age} Years` : "N/A"), "Race", "Asian"]
     ],
   });
+
+  // Calculate safe programmatic height threshold position
+  let currentY = doc.previousAutoTable ? doc.previousAutoTable.finalY : 80;
 
   // ─── 3. CLINICAL EVALUATION METRICS MATRIX ────────────────────
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text("Medical & Diagnostic History", 14, doc.lastAutoTable.finalY + 12);
+  doc.text("Medical & Diagnostic History", 14, currentY + 12);
 
-  // FIXED: Extracted symptoms string is now defined BEFORE it is injected below!
-  const symptomText = selectedSymptoms.map((s) => s.label).join(", ");
+  const symptomText = selectedSymptoms && selectedSymptoms.length > 0 
+    ? selectedSymptoms.map((s) => s.label).join(", ") 
+    : "No markers declared";
 
+  // Generate Table 2 safely with fixed styling parameters
   doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 16,
+    startY: currentY + 16,
     theme: "plain",
     styles: { fontSize: 9, cellPadding: 4, lineColor: [200, 200, 200], lineWidth: 0.2 },
     columnStyles: {
       0: { fontStyle: "bold", fillColor: [230, 238, 245], width: 45 },
-      1: { textHeading: "paragraph" }
+      1: { cellWidth: 'auto' } // Fixed the custom non-standard parameter bug here
     },
     body: [
       ["Admission Indicators / Symptoms", symptomText],
       ["Principal Evaluating Specialist", result.specialist || "General Physician"],
       ["Reason for Evaluation", "Patient presented with a dense array of tracking acute markers."],
-      ["Primary Predicted Diagnosis", `${result.disease.toUpperCase()} (${result.confidence}% Confidence Level)`],
+      ["Primary Predicted Diagnosis", `${(result.disease || "N/A").toUpperCase()} (${result.confidence || 0}% Confidence Level)`],
       ["Secondary Alternative Target", result.top3?.[1] ? `${result.top3[1].disease} (${result.top3[1].confidence}%)` : "N.A."],
       ["Other Differential Targets", result.top3?.[2] ? `${result.top3[2].disease} (${result.top3[2].confidence}%)` : "N.A."],
-      ["Clinical Precautions / Advice", (result.precautions || []).join(", ")]
+      ["Clinical Precautions / Advice", result.precautions && result.precautions.length > 0 ? result.precautions.join(", ") : "None specified"]
     ],
   });
 
@@ -222,8 +229,8 @@ function App() {
   doc.text("1-800-MEDISCAN // www.mediscan-ai-system.vercel.app", 105, pageHeight - 12, { align: "center" });
   doc.text("Page 1", 190, pageHeight - 12, { align: "right" });
 
-  // Trigger Save File Stream Execution (With safety optional chain)
-  doc.save(`MediScan_Discharge_Summary_${user?.name || "Guest"}.pdf`);
+  // Stream deployment download sequence to system directory
+  doc.save(`MediScan_Discharge_Summary_${patientName.replace(/\s+/g, "_")}.pdf`);
 };
 
   // ─── VIEW 1: AUTHENTICATION INTERFACE (DARK COMPACT WINDOW) ──────
